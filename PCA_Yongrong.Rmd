@@ -1,0 +1,246 @@
+---
+title: "read_data"
+author: "Yongrong Chai"
+date: '2022-03-30'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Read Raw data
+```{r}
+library("R.matlab")
+
+```
+
+```{r}
+data<-readMat('Raw data/GRFx.mat')
+GRFx<-data$GRFx
+data<-readMat('Raw data/GRFy.mat')
+GRFy<-data$GRFy
+data<-readMat('Raw data/GRFz.mat')
+GRFz<-data$GRFz
+```
+
+```{r}
+data<-readMat('Raw data/Mx.mat')
+Mx<-data$Mx
+data<-readMat('Raw data/My.mat')
+My<-data$My
+data<-readMat('Raw data/Mz.mat')
+Mz<-data$Mz
+```
+
+```{R}
+data<-readMat('Raw data/COPx.mat')
+COPx<-data$COPx
+data<-readMat('Raw data/COPy.mat')
+COPy<-data$COPy
+```
+
+```{r}
+data<-readMat('Raw data/AP_GRF_stance_N.mat')
+AP_GRF_stance_N<-data$AP_GRF_stance_N
+data<-readMat('Raw data/ML_GRF_stance_N.mat')
+ML_GRF_stance_N<-data$ML_GRF_stance_N
+data<-readMat('Raw data/V_GRF_stance_N.mat')
+V_GRF_stance_N<-data$V_GRF_stance_N
+```
+
+```{r}
+data<-readMat('Raw data/COPx_stance.mat')
+COPx_stance<-data$COPx_stance
+data<-readMat('Raw data/COPy_stance.mat')
+COPy_stance<-data$COPy_stance
+```
+
+```{r}
+IDinfo<-read.csv("Raw data/IDinfo.csv")
+discrete<-read.csv("Raw data/discrete.csv")
+```
+
+```{r}
+library(ggplot2)
+library(ggfortify)
+pca_data1 <-cbind(IDinfo, discrete)[,c(2,5,6,7,8)]
+pr_out_impulse = prcomp(pca_data1[, c(2:5)], scale = TRUE)
+autoplot(pr_out_impulse, data = pca_data1,colour = 'KNEE', size = 1, label.size = 3,
+         loadings = TRUE, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3,loadings.label.colour = 'black')
+
+pca_data2 <-cbind(IDinfo, discrete)[,c(2,12,13,15,16)]
+pr_out_unloading = prcomp(pca_data2[, c(2:5)], scale = TRUE)
+autoplot(pr_out_unloading, data = pca_data2,colour = 'KNEE', size = 1, label.size = 3,
+         loadings = TRUE, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3,loadings.label.colour = 'black')
+
+pca_data3 <-cbind(IDinfo, discrete)[,c(2,18:25)]
+pr_out_peak = prcomp(pca_data3[, c(2:9)], scale = TRUE)
+autoplot(pr_out_peak, data = pca_data3,colour = 'KNEE', size = 1, label.size = 3,
+         loadings = TRUE, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3, loadings.label.colour = 'black')
+
+pca_data4 <-cbind(IDinfo, discrete)[,c(2,14,17,26:33)]
+pr_out_time = prcomp(pca_data4[, c(2:11)], scale = TRUE)
+autoplot(pr_out_time, data = pca_data4,colour = 'KNEE', size = 1, label.size = 3,
+         loadings = TRUE, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3, loadings.label.colour = 'black')
+```
+
+```{r}
+pca.time.summary<-summary(pr_out_time)
+ls(pca.time.summary) # Lists the objects produced by summary
+```
+We are interested to know (1) what are the important factors that emerge from the PCA (i.e. which ones explain a lot of variation) and (2) what do these factors actually say about the variation observed in our data. For (1), look at the importance object in the summary:
+
+```{r}
+pca.time.summary$importance
+```
+The second row, Proportion of Variance, shows how much variation in the data is described by each component;
+we will focus on the first 6 principal components, PC1 -- PC6, which together explain 81.971% of the observed variation.
+
+What are the principal components actually explaining? The rotation from the summary call has the information we are interested in.
+```{r}
+pca.time.summary$rotation
+```
+？？？
+Biplot
+```{r}
+#biplot(x = pr_out_time)
+autoplot(pr_out_time, data = pca_data4,colour = 'KNEE', size = 1, label.size = 3,
+         loadings = TRUE, loadings.colour = 'blue',
+         loadings.label = TRUE, loadings.label.size = 3, loadings.label.colour = 'black')
+
+plot(x = pr_out_time$x[, 1],
+     y = pr_out_time$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2")
+```
+
+```{r}
+pca.impulse.summary<-summary(pr_out_impulse)
+pca.unloading.summary<-summary(pr_out_unloading)
+pca.peak.summary<-summary(pr_out_peak)
+
+
+pca.impulse.summary$importance #first2 - 0.555930+0.321630
+pca.unloading.summary$importance #first2 - 0.710820+0.1478000
+pca.peak.summary$importance #first5 - 0.322190+0.188500+0.137390+0.1226800+0.0957700
+pca.time.summary$importance #first6
+```
+
+```{r}
+pca.impulse.summary$rotation #详情请见iPad
+plot(x = pr_out_impulse$x[, 1],
+     y = pr_out_impulse$x[, 2],
+     xlab = "PC 1",
+     ylab = "PC 2")
+par(mfrow = c(2, 2), las = 2) 
+boxplot(formula = vGRF_impulse ~ KNEE, data = pca_data1)
+boxplot(formula = mGRF_impulse ~ KNEE, data = pca_data1)
+boxplot(formula = lGRF_impulse ~ KNEE, data = pca_data1)
+boxplot(formula = aGRF_impulse ~ KNEE, data = pca_data1)
+```
+
+
+RSSA:
+svd.method: 
+1.nutrlan 2.propack(faster & #stable): long series & large window length; TRUNCATED
+3.eigen 4.svd: small series & window length;   FULL
+```{r}
+library(Rssa)
+# Decomposition stage
+s <- ssa(co2, L = 120)
+# Reconstruction stage
+# The results are the reconstructed series r$F1, r$F2, and r$F3
+recon <- reconstruct(s, groups = list(c(1,4), c(2,3), c(5,6)))
+# Calculate the residuals
+res <- residuals(recon)
+
+```
+
+```{r}
+pca_data1
+pca_data2
+pca_data3
+pca_data4
+res.pca.3 <- PCA(pca_data3[, c(2:9)], graph = FALSE)
+fviz_pca_var(res.pca.3, col.var = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             repel = TRUE # Avoid text overlapping
+)
+fviz_eig(res.pca.3, addlabels = TRUE, ylim = c(0, 50)) #White Black Hispanic Asia Other North American 
+fviz_cos2(res.pca.3, choice = "var", top = 5) #The cos2 values are used to estimate the quality of the representation
+
+res.pca.4 <- PCA(pca_data4[, c(2:11)], graph = FALSE)
+fviz_pca_var(res.pca.4, col.var = "cos2",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), 
+             repel = TRUE # Avoid text overlapping
+)
+fviz_eig(res.pca.4, addlabels = TRUE, ylim = c(0, 50)) #White Black Hispanic Asia Other North American 
+fviz_cos2(res.pca.4, choice = "var", top = 7)
+
+
+```
+
+```{r}
+three_scaled <- scale(pca_data4[,-1])
+row.names(three_scaled) <- NULL
+
+three.ch <- hclust(dist(three_scaled), method = "ward.D")
+plot(three.ch)
+rect.hclust(three.ch, k = 32)
+
+criteria <- CHCriterion(data = three_scaled, kmax = 7, 
+                        clustermethod = "hclust", method = "ward.D")
+criteria$plot
+
+
+
+whole_scaled <- scale(cbind(IDinfo, discrete)[,-c(1,2)])
+row.names(whole_scaled) <- NULL
+criteria4 <- CHCriterion(data = whole_scaled, kmax = 31, 
+                        clustermethod = "hclust", method = "ward.D")
+criteria4$plot
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+
+
+```
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,108 @@
+---
+title: "Physical Therapy"
+author: "Jack Carbaugh"
+date: "4/4/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load("knitr","tinytex", tidyverse, readxl)
+```
+
+
+```{r}
+data <- read_excel("Data/discrete.xls")
+id_info <- read_excel("Data/IDinfo.xls")
+t <- read.csv("Data/Mx",header = FALSE)
+t2 <- read.csv("Data/GRFx",header = FALSE)
+t3 <- read.csv("Data/GRFy",header = FALSE)
+t4 <- read.csv("Data/GRFz",header = FALSE)
+t5 <- read.csv("Data/My",header = FALSE)
+t6 <- read.csv("Data/Mz",header = FALSE)
+t7 <- read.csv("Data/COPx",header = FALSE)
+t8 <- read.csv("Data/COPy",header = FALSE)
+
+
+add_info_d <- function(data){
+  d <- merge(id_info, data, by.x = 0, by.y = 0)%>%
+    select(-Row.names) %>%
+    arrange(ID)
+  return(d)
+}
+
+add_info <- function(data){
+  d <- merge(id_info, data, by.x = 0, by.y = 0)%>%
+    select(-Row.names) %>%
+    arrange(ID) %>%
+    select(ID:V1300)
+  return(d)
+}
+
+full <- add_info_d(data)
+Mx <- add_info(t)%>%
+  mutate(ID = paste(ID,TRIAL,KNEE,sep = "-")) %>%
+  select(-c(KNEE,tr_length,TRIAL))
+My <- add_info(t5)%>%
+  mutate(ID = paste(ID,TRIAL,KNEE,sep = "-")) %>%
+  select(-c(KNEE,tr_length,TRIAL))
+Mz <- add_info(t6)%>%
+  mutate(ID = paste(ID,TRIAL,KNEE,sep = "-")) %>%
+  select(-c(KNEE,tr_length,TRIAL))
+GRFx <- add_info(t2) %>%
+  mutate(ID = paste(ID,TRIAL,KNEE,sep = "-")) %>%
+  select(-c(KNEE,tr_length,TRIAL))
+GRFy <- add_info(t3) %>%
+  mutate(ID = paste(ID,TRIAL,KNEE,sep = "-")) %>%
+  select(-c(KNEE,tr_length,TRIAL))
+GRFz <- add_info(t4) %>%
+  mutate(ID = paste(ID,TRIAL,sep = "-")) %>%
+  select(-c(KNEE,tr_length,TRIAL))
+COPx <- add_info(t7)%>%
+  mutate(ID = paste(ID,TRIAL,KNEE,sep = "-")) %>%
+  select(-c(KNEE,tr_length,TRIAL))
+COPy <- add_info(t8)%>%
+  mutate(ID = paste(ID,TRIAL,KNEE,sep = "-")) %>%
+  select(-c(KNEE,tr_length,TRIAL))
+  
+
+write.csv(GRFx,"GRFx.csv", row.names = FALSE)
+write.csv(GRFy,"GRFy.csv", row.names = FALSE)
+write.csv(GRFz,"GRFz.csv", row.names = FALSE)
+write.csv(Mx,"Mx.csv", row.names = FALSE)
+write.csv(My,"My.csv", row.names = FALSE)
+write.csv(Mz,"Mz.csv", row.names = FALSE)
+write.csv(COPx,"COPx.csv", row.names = FALSE)
+write.csv(COPy,"COPy.csv", row.names = FALSE)
+
+```
+
+
+```{r}
+cn <- colnames(full)[4:33]
+for (co in cn){
+  hist(full[[co]],xlab = co, main = paste("Histogram of ", co))
+  
+}
+
+
+plot(full$apGRF_peak1, full$apGRF_peak2)
+plot(full$vGRF_peak1, full$vGRF_peak2)
+plot(full$t_vGRF_peak1_PERC, full$t_vGRF_peak2_PERC)
+plot(full$stancetime, full$t_vGRF_peak1_PERC)
+
+ggplot(data = full)+geom_point(mapping = aes(x=apGRF_peak1, y = apGRF_peak2))
+
+ggplot(data = full)+geom_point(mapping = aes(x=qlogis(t_vGRF_peak1_PERC/100), y = qlogis(t_vGRF_peak2_PERC/100)))
+
+
+ggplot(data = full)+geom_point(mapping = aes(x=stancetime, y = t_vGRF_peak1_PERC))
+
+ggplot(data = full)+geom_point(mapping = aes(x=vGRF_peak1, y = vGRF_peak2, col = vGRF_valley))+scale_color_gradient(low="blue", high="red")
+
+
+
+
+
+
+```
